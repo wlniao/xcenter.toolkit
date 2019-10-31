@@ -51,7 +51,13 @@ namespace XCenter
                 Response.Cookies.Append("xhost", xhost);
             }
             xcommon = xCommon.Create(xhost);
-            if (xcommon.Register < DateTime.Now || string.IsNullOrEmpty(xcommon.wKey))
+            var _session = GetRequest("session");
+            if (string.IsNullOrEmpty(_session))
+            {
+                _session = GetCookies("session");
+            }
+            var session = string.IsNullOrEmpty(_session) ? "" : Encryptor.AesDecrypt(_session, string.IsNullOrEmpty(xcommon.Token) ? xCommon.xToken : xcommon.Token);
+            if (String.IsNullOrEmpty(session) && (xcommon.Register < DateTime.Now || string.IsNullOrEmpty(xcommon.wKey)))
             {
                 errorMsg = xcommon.Message;
                 var errorPage = new ContentResult();
@@ -62,22 +68,9 @@ namespace XCenter
             else
             {
                 errorMsg = "您的访问已失效，请重新登录";
-                var session = Encryptor.AesDecrypt(GetCookies("session"), xcommon.Token);
-                if (Request.Query.ContainsKey("session"))
+                if (Request.Query.ContainsKey("session") && GetCookies("xhost") == GetRequestNoSecurity("xhost"))
                 {
-                    var _session = Request.Query["session"].ToString();
-                    _session = Encryptor.AesDecrypt(_session, xcommon.Token);
-                    if (string.IsNullOrEmpty(_session) && !string.IsNullOrEmpty(session) && GetCookies("xhost") != GetRequestNoSecurity("xhost"))
-                    {
-                        //非同域调用则清空session
-                        session = "";
-                    }
-                    else if (!string.IsNullOrEmpty(_session))
-                    {
-                        //使用并保存新生效session
-                        session = _session;
-                        Response.Cookies.Append("session", Request.Query["session"].ToString());
-                    }
+                    Response.Cookies.Append("session", _session);
                 }
                 var ht = Newtonsoft.Json.JsonConvert.DeserializeObject<System.Collections.Hashtable>(session);
                 if (ht != null && ht.ContainsKey("sid") && ht.ContainsKey("wkey"))

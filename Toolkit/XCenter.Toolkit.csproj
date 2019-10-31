@@ -11,7 +11,7 @@
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
-    <Version>1.0.0-beta-703</Version>
+    <Version>1.0.0-beta-825</Version>
     <Authors>Chaoyi Xie</Authors>
     <PackageId>XCenter</PackageId>
     <AssemblyName>XCenter</AssemblyName>
@@ -40,7 +40,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Wlniao.XCore" Version="2.1.18" />
+    <PackageReference Include="Wlniao.XCore" Version="2.1.20" />
   </ItemGroup>
 
 </Project>
