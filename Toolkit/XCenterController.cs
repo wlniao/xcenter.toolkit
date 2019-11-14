@@ -23,10 +23,6 @@ namespace XCenter
         /// </summary>
         protected string _wkey = "";
         /// <summary>
-        /// 当前选中的机构
-        /// </summary>
-        protected string _organ = "";
-        /// <summary>
         /// Wlniao.i接口访问工具
         /// </summary>
         protected xCommon xcommon = null;
@@ -40,23 +36,15 @@ namespace XCenter
             var xhost = GetRequestNoSecurity("xhost");
             if (string.IsNullOrEmpty(xhost))
             {
-                xhost = GetCookies("xhost");
-                if (string.IsNullOrEmpty(xhost))
-                {
-                    xhost = xCommon.xHost;
-                }
+                xhost = string.IsNullOrEmpty(GetCookies("xhost")) ? xCommon.xHost : GetCookies("xhost");
             }
             else
             {
                 Response.Cookies.Append("xhost", xhost);
             }
             xcommon = xCommon.Create(xhost);
-            var _session = GetRequest("session");
-            if (string.IsNullOrEmpty(_session))
-            {
-                _session = GetCookies("session");
-            }
-            var session = string.IsNullOrEmpty(_session) ? "" : Encryptor.AesDecrypt(_session, string.IsNullOrEmpty(xcommon.Token) ? xCommon.xToken : xcommon.Token);
+            var encrypt = string.IsNullOrEmpty(GetRequest("session")) ? GetCookies("session") : GetRequest("session");
+            var session = string.IsNullOrEmpty(encrypt) ? "" : Encryptor.AesDecrypt(encrypt, string.IsNullOrEmpty(xcommon.Token) ? xCommon.xToken : xcommon.Token);
             if (String.IsNullOrEmpty(session) && (xcommon.Register < DateTime.Now || string.IsNullOrEmpty(xcommon.wKey)))
             {
                 errorMsg = xcommon.Message;
@@ -68,25 +56,16 @@ namespace XCenter
             else
             {
                 errorMsg = "您的访问已失效，请重新登录";
-                if (Request.Query.ContainsKey("session") && GetCookies("xhost") == GetRequestNoSecurity("xhost"))
-                {
-                    Response.Cookies.Append("session", _session);
-                }
                 var ht = Newtonsoft.Json.JsonConvert.DeserializeObject<System.Collections.Hashtable>(session);
                 if (ht != null && ht.ContainsKey("sid") && ht.ContainsKey("wkey"))
                 {
                     _sid = ht["sid"].ToString();
                     _wkey = ht["wkey"].ToString();
+                    Response.Cookies.Append("session", encrypt);
                     if (!string.IsNullOrEmpty(_sid) && !string.IsNullOrEmpty(_wkey))
                     {
                         errorMsg = "";
-                        ViewBag.iHost = xcommon.Host.IndexOf("://") > 0 ? xcommon.Host : "//" + xcommon.Host;
-                        _organ = GetCookies("select_organ");
-                        if (!string.IsNullOrEmpty(_organ) && !_organ.StartsWith(_wkey))
-                        {
-                            _organ = "";
-                            Response.Cookies.Delete("select_organ");
-                        }
+                        ViewBag.iHost = string.IsNullOrEmpty(xcommon.Host) ? "" : (xcommon.Host.IndexOf("://") > 0 ? xcommon.Host : "//" + xcommon.Host);
                         base.OnActionExecuting(filterContext);
                     }
                 }
@@ -175,74 +154,74 @@ namespace XCenter
             }
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <returns></returns>
-        public IActionResult enums()
-        {
-            var enums = XCenter.Enum.GetList(xcommon, method);
-            return Json(enums.Select(e => new
-            {
-                value = e.key,
-                label = e.label
-            }).ToList());
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <returns></returns>
-        public IActionResult organ()
-        {
-            if (method == "list")
-            {
-                var data = Organ.GetList(xcommon, _sid);
-                if (data.Count == 1)
-                {
-                    _organ = data[0].id;
-                }
-                else if (data.Count == 0)
-                {
-                    _organ = "";
-                }
-                return Json(new { data = data, select = string.IsNullOrEmpty(_organ) ? "" : _organ });
-            }
-            else
-            {
-                //保存当前所选定的要管理的校园
-                Response.Cookies.Append("select_organ", method);
-                return JsonStr("");
-            }
-        }
-        /// <summary>
-        /// 权限检查 参数 organ:所属范围 code:权限代码
-        /// </summary>
-        /// <returns></returns>
-        public IActionResult auth()
-        {
-            var code = GetRequest("code");
-            var organ = GetRequest("organ");
-            if (string.IsNullOrEmpty(code) && string.IsNullOrEmpty(organ))
-            {
-                return Json(new { success = false, message = "未指定权限范围" });
-            }
-            else
-            {
-                var rlt = false;
-                if (string.IsNullOrEmpty(organ))
-                {
-                    rlt = Permission(code, _sid);
-                }
-                else
-                {
-                    rlt = PermissionOrgan(organ, code, _sid);
-                }
-                if (!rlt)
-                {
-                    errorMsg = "";
-                }
-                return Json(new { success = rlt });
-            }
-        }
+        ///// <summary>
+        ///// 
+        ///// </summary>
+        ///// <returns></returns>
+        //public IActionResult enums()
+        //{
+        //    var enums = XCenter.Enum.GetList(xcommon, method);
+        //    return Json(enums.Select(e => new
+        //    {
+        //        value = e.key,
+        //        label = e.label
+        //    }).ToList());
+        //}
+        ///// <summary>
+        ///// 
+        ///// </summary>
+        ///// <returns></returns>
+        //public IActionResult organ()
+        //{
+        //    if (method == "list")
+        //    {
+        //        var data = Organ.GetList(xcommon, _sid);
+        //        if (data.Count == 1)
+        //        {
+        //            _organ = data[0].id;
+        //        }
+        //        else if (data.Count == 0)
+        //        {
+        //            _organ = "";
+        //        }
+        //        return Json(new { data = data, select = string.IsNullOrEmpty(_organ) ? "" : _organ });
+        //    }
+        //    else
+        //    {
+        //        //保存当前所选定的要管理的校园
+        //        Response.Cookies.Append("select_organ", method);
+        //        return JsonStr("");
+        //    }
+        //}
+        ///// <summary>
+        ///// 权限检查 参数 organ:所属范围 code:权限代码
+        ///// </summary>
+        ///// <returns></returns>
+        //public IActionResult auth()
+        //{
+        //    var code = GetRequest("code");
+        //    var organ = GetRequest("organ");
+        //    if (string.IsNullOrEmpty(code) && string.IsNullOrEmpty(organ))
+        //    {
+        //        return Json(new { success = false, message = "未指定权限范围" });
+        //    }
+        //    else
+        //    {
+        //        var rlt = false;
+        //        if (string.IsNullOrEmpty(organ))
+        //        {
+        //            rlt = Permission(code, _sid);
+        //        }
+        //        else
+        //        {
+        //            rlt = PermissionOrgan(organ, code, _sid);
+        //        }
+        //        if (!rlt)
+        //        {
+        //            errorMsg = "";
+        //        }
+        //        return Json(new { success = rlt });
+        //    }
+        //}
     }
 }
