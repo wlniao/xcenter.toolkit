@@ -42,10 +42,14 @@ namespace XCenter
             {
                 Response.Cookies.Append("xhost", xhost);
             }
-            xcommon = xCommon.Create(xhost);
             var encrypt = string.IsNullOrEmpty(GetRequest("session")) ? GetCookies("session") : GetRequest("session");
-            var session = string.IsNullOrEmpty(encrypt) ? "" : Encryptor.AesDecrypt(encrypt, string.IsNullOrEmpty(xcommon.Token) ? xCommon.xToken : xcommon.Token);
-            if (String.IsNullOrEmpty(session) && (xcommon.Register < DateTime.Now || string.IsNullOrEmpty(xcommon.wKey)))
+            var session = string.IsNullOrEmpty(encrypt) ? "" : Encryptor.AesDecrypt(encrypt, xCommon.xToken);
+            if (string.IsNullOrEmpty(session) && !string.IsNullOrEmpty(encrypt))
+            {
+                xcommon = xCommon.Create(xhost);
+                session = string.IsNullOrEmpty(encrypt) ? "" : Encryptor.AesDecrypt(encrypt, xcommon.Token);
+            }
+            if (String.IsNullOrEmpty(session) && (xcommon == null || xcommon.Register < DateTime.Now || string.IsNullOrEmpty(xcommon.wKey)))
             {
                 errorMsg = xcommon.Message;
                 var errorPage = new ContentResult();
@@ -65,7 +69,7 @@ namespace XCenter
                     if (!string.IsNullOrEmpty(_sid) && !string.IsNullOrEmpty(_wkey))
                     {
                         errorMsg = "";
-                        ViewBag.iHost = string.IsNullOrEmpty(xcommon.Host) ? "" : (xcommon.Host.IndexOf("://") > 0 ? xcommon.Host : "//" + xcommon.Host);
+                        ViewBag.iHost = string.IsNullOrEmpty(xhost) ? "" : (xhost.IndexOf("://") > 0 ? xhost : "//" + xhost);
                         base.OnActionExecuting(filterContext);
                     }
                 }
