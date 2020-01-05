@@ -33,25 +33,37 @@ namespace XCenter
         public override void OnActionExecuting(ActionExecutingContext filterContext)
         {
             #region 解析请求Session
-            var xhost = GetRequestNoSecurity("xhost");
-            if (string.IsNullOrEmpty(xhost))
+            var encrypt = "";
+            var xhost = GetCookies("xhost");
+            if (Request.Query.Keys.Contains("xhost"))
             {
-                xhost = string.IsNullOrEmpty(GetCookies("xhost")) ? xCommon.xHost : GetCookies("xhost");
+                xhost = GetRequestNoSecurity("xhost");
+                Response.Cookies.Append("xhost", xhost);
+            }
+            if (Request.Query.Keys.Contains("session"))
+            {
+                encrypt = GetRequestNoSecurity("session");
+                Response.Cookies.Append("session", encrypt);
             }
             else
             {
-                Response.Cookies.Append("xhost", xhost);
+                encrypt = GetCookies("session");
             }
-            var encrypt = string.IsNullOrEmpty(GetRequest("session")) ? GetCookies("session") : GetRequest("session");
-            var session = string.IsNullOrEmpty(encrypt) ? "" : Encryptor.AesDecrypt(encrypt, xCommon.xToken);
+            xcommon = xCommon.Create(xhost);
+            errorMsg = "您的访问已失效，请重新登录";
+            var session = Encryptor.AesDecrypt(encrypt, xCommon.xToken);
             if (string.IsNullOrEmpty(session) && !string.IsNullOrEmpty(encrypt))
             {
-                xcommon = xCommon.Create(xhost);
-                session = string.IsNullOrEmpty(encrypt) ? "" : Encryptor.AesDecrypt(encrypt, xcommon.Token);
+                // 通过应用Token解密
+                session = Encryptor.AesDecrypt(encrypt, xcommon.Token);
             }
-            if (String.IsNullOrEmpty(session) && (xcommon == null || xcommon.Register < DateTime.Now || string.IsNullOrEmpty(xcommon.wKey)))
+
+            if (String.IsNullOrEmpty(session) || xcommon == null || xcommon.Register < DateTime.Now)
             {
-                errorMsg = xcommon.Message;
+                if (xcommon != null)
+                {
+                    errorMsg = xcommon.Message;
+                }
                 var errorPage = new ContentResult();
                 errorPage.ContentType = "text/html;charset=utf-8";
                 errorPage.Content = errorHtml.Replace("{{errorMsg}}", errorMsg).Replace("{{errorTitle}}", errorTitle).Replace("{{errorIcon}}", errorIcon);
@@ -59,13 +71,11 @@ namespace XCenter
             }
             else
             {
-                errorMsg = "您的访问已失效，请重新登录";
                 var ht = Newtonsoft.Json.JsonConvert.DeserializeObject<System.Collections.Hashtable>(session);
                 if (ht != null && ht.ContainsKey("sid") && ht.ContainsKey("wkey"))
                 {
                     _sid = ht["sid"].ToString();
                     _wkey = ht["wkey"].ToString();
-                    Response.Cookies.Append("session", encrypt);
                     if (!string.IsNullOrEmpty(_sid) && !string.IsNullOrEmpty(_wkey))
                     {
                         errorMsg = "";
