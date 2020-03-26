@@ -15,17 +15,13 @@ namespace XCenter
     public partial class XCenterController : XCoreController
     {
         /// <summary>
-        /// 当前登录的用户Id
+        /// 主接口访问工具
         /// </summary>
-        protected string _sid = "";
+        protected xCommon com = null;
         /// <summary>
-        /// 客户统一数字编号
+        /// 主平台登录会话状态
         /// </summary>
-        protected string _wkey = "";
-        /// <summary>
-        /// Wlniao.i接口访问工具
-        /// </summary>
-        protected xCommon xcommon = null;
+        protected WSession wsession = null;
         /// <summary>
         /// 页面加载前事件
         /// </summary>
@@ -33,56 +29,40 @@ namespace XCenter
         public override void OnActionExecuting(ActionExecutingContext filterContext)
         {
             #region 解析请求Session
-            var encrypt = "";
+            var key = "";
             var xhost = GetCookies("xhost");
             if (Request.Query.Keys.Contains("xhost"))
             {
                 xhost = GetRequestNoSecurity("xhost");
                 Response.Cookies.Append("xhost", xhost);
             }
-            if (Request.Query.Keys.Contains("session"))
+            com = xCommon.Create(xhost);
+            if (Request.Query.Keys.Contains("wsession"))
             {
-                encrypt = GetRequestNoSecurity("session");
-                Response.Cookies.Append("session", encrypt);
+                key = GetRequestNoSecurity("wsession");
+                Response.Cookies.Append("wsession", key);
             }
             else
             {
-                encrypt = GetCookies("session");
+                key = GetCookies("wsession");
             }
-            xcommon = xCommon.Create(xhost);
-            errorMsg = "您的访问已失效，请重新登录";
-            var session = Encryptor.AesDecrypt(encrypt, xCommon.xToken);
-            if (string.IsNullOrEmpty(session) && !string.IsNullOrEmpty(encrypt))
+            wsession = new WSession(com, key);
+            if (wsession.login)
             {
-                // 通过应用Token解密
-                session = Encryptor.AesDecrypt(encrypt, xcommon.Token);
+                ViewBag.iHost = string.IsNullOrEmpty(xhost) ? "" : (xhost.IndexOf("://") > 0 ? xhost : "//" + xhost);
+                base.OnActionExecuting(filterContext);
             }
-
-            if (String.IsNullOrEmpty(session) || xcommon == null || xcommon.Register < DateTime.Now)
+            else
             {
-                if (xcommon != null)
+                errorMsg = "您的访问已失效，请重新登录";
+                if (com != null && !string.IsNullOrEmpty(com.Message))
                 {
-                    errorMsg = xcommon.Message;
+                    errorMsg = com.Message;
                 }
                 var errorPage = new ContentResult();
                 errorPage.ContentType = "text/html;charset=utf-8";
                 errorPage.Content = errorHtml.Replace("{{errorMsg}}", errorMsg).Replace("{{errorTitle}}", errorTitle).Replace("{{errorIcon}}", errorIcon);
                 filterContext.Result = errorPage;
-            }
-            else
-            {
-                var ht = Newtonsoft.Json.JsonConvert.DeserializeObject<System.Collections.Hashtable>(session);
-                if (ht != null && ht.ContainsKey("sid") && ht.ContainsKey("wkey"))
-                {
-                    _sid = ht["sid"].ToString();
-                    _wkey = ht["wkey"].ToString();
-                    if (!string.IsNullOrEmpty(_sid) && !string.IsNullOrEmpty(_wkey))
-                    {
-                        errorMsg = "";
-                        ViewBag.iHost = string.IsNullOrEmpty(xhost) ? "" : (xhost.IndexOf("://") > 0 ? xhost : "//" + xhost);
-                        base.OnActionExecuting(filterContext);
-                    }
-                }
             }
             #endregion
         }
@@ -97,8 +77,8 @@ namespace XCenter
         {
             if (!string.IsNullOrEmpty(Code))
             {
-                var rlt = xcommon.Get<Boolean>("app", "permission"
-                    , new KeyValuePair<string, string>("sid", string.IsNullOrEmpty(Sid) ? _sid : Sid)
+                var rlt = com.Get<Boolean>("app", "permission"
+                    , new KeyValuePair<string, string>("sid", string.IsNullOrEmpty(Sid) ? wsession.sid : Sid)
                     , new KeyValuePair<string, string>("code", Code));
                 if (rlt.data)
                 {
@@ -135,8 +115,8 @@ namespace XCenter
         {
             if (!string.IsNullOrEmpty(Code))
             {
-                var rlt = xcommon.Get<Boolean>("app", "permissionorgan"
-                    , new KeyValuePair<string, string>("sid", string.IsNullOrEmpty(Sid) ? _sid : Sid)
+                var rlt = com.Get<Boolean>("app", "permissionorgan"
+                    , new KeyValuePair<string, string>("sid", string.IsNullOrEmpty(Sid) ? wsession.sid : Sid)
                     , new KeyValuePair<string, string>("code", Code)
                     , new KeyValuePair<string, string>("organ", Organ));
                 if (rlt.data)

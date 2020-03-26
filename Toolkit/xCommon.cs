@@ -53,7 +53,7 @@ namespace XCenter
                     {
                         try
                         {
-                            var token = hostToken.ContainsKey(host) ? hostToken[host] : "";
+                            var token = hostToken.ContainsKey(host) ? hostToken[host] : xToken;
                             cache.Add(host, new xCommon() { Https = https, Host = host, Token = token, Message = "", Register = DateTime.MinValue });
                         }
                         catch { }
@@ -540,7 +540,7 @@ namespace XCenter
             {
                 var json = RequestGet(CreateUrl(Https, Host, Token, controller, action, list));
                 rlt = Newtonsoft.Json.JsonConvert.DeserializeObject<ApiResult<Object>>(json);
-                if (rlt.message != "token error")
+                if (rlt.message != "api token error")
                 {
                     return json;
                 }
@@ -548,7 +548,7 @@ namespace XCenter
             if (!string.IsNullOrEmpty(Wlniao.XServer.Common.AppId))
             {
                 //重新获取最新的ApiToken
-                var _rlt = Wlniao.XServer.Common.Get<String>("icenter", "xserver", "token"
+                var _rlt = Wlniao.XServer.Common.Get<String>("xcenter", "xserver", "token"
                     , new KeyValuePair<string, string>("wkey", wKey)
                     , new KeyValuePair<string, string>("host", Host));
                 if (_rlt.success && _rlt.data != Token)
@@ -625,7 +625,7 @@ namespace XCenter
                     return new ApiResult<T>() { success = false, message = "返回的数据格式错误", data = default(T) };
                 }
             }
-            if (rlt.message == "token error" && !string.IsNullOrEmpty(Wlniao.XServer.Common.AppId))
+            if (rlt.message == "api token error" && !string.IsNullOrEmpty(Wlniao.XServer.Common.AppId))
             {
                 //重新获取最新的ApiToken
                 var _rlt = Wlniao.XServer.Common.Get<String>("xcenter", "xserver", "token"
@@ -714,7 +714,7 @@ namespace XCenter
                     return new ApiResult<T>() { success = false, message = "返回的数据格式错误", data = default(T) };
                 }
             }
-            if (rlt.message == "token error" && !string.IsNullOrEmpty(Wlniao.XServer.Common.AppId))
+            if (rlt.message == "api token error" && !string.IsNullOrEmpty(Wlniao.XServer.Common.AppId))
             {
                 //重新获取最新的ApiToken
                 var _rlt = Wlniao.XServer.Common.Get<String>("xcenter", "xserver", "token"

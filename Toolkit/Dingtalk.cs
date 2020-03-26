@@ -28,28 +28,28 @@ namespace XCenter
         /// <summary>
         /// 获取钉钉AccessToken
         /// </summary>
-        /// <param name="xcommon"></param>
+        /// <param name="com"></param>
         /// <returns></returns>
-        public static Wlniao.ApiResult<String> GetToken(xCommon xcommon)
+        public static Wlniao.ApiResult<String> GetToken(xCommon com)
         {
-            if (xcommon == null)
+            if (com == null)
             {
                 return null;
             }
-            return xcommon.Get<String>("app", "dingtalk_token");
+            return com.Get<String>("app", "dingtalk_token");
         }
         /// <summary>
         /// 钉钉待办任务推送
         /// </summary>
-        /// <param name="xcommon"></param>
+        /// <param name="com"></param>
         /// <param name="to">Sid或手机号</param>
         /// <param name="title"></param>
         /// <param name="url"></param>
         /// <param name="exdata"></param>
         /// <returns></returns>
-        public static Wlniao.ApiResult<String> WorkrecordAdd(xCommon xcommon, String to, String title, String url, List<FormItemVo> exdata)
+        public static Wlniao.ApiResult<String> WorkrecordAdd(xCommon com, String to, String title, String url, List<FormItemVo> exdata)
         {
-            if (string.IsNullOrEmpty(to) || xcommon == null)
+            if (string.IsNullOrEmpty(to) || com == null)
             {
                 return null;
             }
@@ -62,38 +62,38 @@ namespace XCenter
                 title,
                 url
             });
-            return xcommon.Post<String>("app", "dingtalk_workrecord_add", json);
+            return com.Post<String>("app", "dingtalk_workrecord_add", json);
         }
         /// <summary>
         /// 钉钉待办任务更新
         /// </summary>
-        /// <param name="xcommon"></param>
+        /// <param name="com"></param>
         /// <param name="record"></param>
         /// <returns></returns>
-        public static Wlniao.ApiResult<String> WorkrecordUpdate(xCommon xcommon, String record)
+        public static Wlniao.ApiResult<String> WorkrecordUpdate(xCommon com, String record)
         {
-            if (string.IsNullOrEmpty(record) || xcommon == null)
+            if (string.IsNullOrEmpty(record) || com == null)
             {
                 return null;
             }
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(new { record });
-            return xcommon.Post<String>("app", "dingtalk_workrecord_update", json);
+            return com.Post<String>("app", "dingtalk_workrecord_update", json);
         }
         /// <summary>
         /// 钉钉待办任务更新
         /// </summary>
-        /// <param name="xcommon"></param>
+        /// <param name="com"></param>
         /// <param name="userid"></param>
         /// <param name="record_id"></param>
         /// <returns></returns>
-        public static Wlniao.ApiResult<String> WorkrecordUpdate(xCommon xcommon, String userid, String record_id)
+        public static Wlniao.ApiResult<String> WorkrecordUpdate(xCommon com, String userid, String record_id)
         {
-            if (string.IsNullOrEmpty(userid) || string.IsNullOrEmpty(record_id) || xcommon == null)
+            if (string.IsNullOrEmpty(userid) || string.IsNullOrEmpty(record_id) || com == null)
             {
                 return null;
             }
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(new { userid, record_id });
-            return xcommon.Post<String>("app", "dingtalk_workrecord_update", json);
+            return com.Post<String>("app", "dingtalk_workrecord_update", json);
         }
 
     }

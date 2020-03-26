@@ -57,17 +57,17 @@ namespace XCenter
         /// <summary>
         /// 获取一个账号信息
         /// </summary>
-        /// <param name="icommon"></param>
+        /// <param name="com"></param>
         /// <param name="key"></param>
         /// <param name="by"></param>
         /// <returns></returns>
-        public static Account Get(xCommon icommon, String key, String by = "sid")
+        public static Account Get(xCommon com, String key, String by = "sid")
         {
-            if (string.IsNullOrEmpty(key) || icommon == null)
+            if (string.IsNullOrEmpty(key) || com == null)
             {
                 return null;
             }
-            var rlt = icommon.Get<Account>("app", "getaccount", new KeyValuePair<string, string>(by, key));
+            var rlt = com.Get<Account>("app", "getaccount", new KeyValuePair<string, string>(by, key));
             if (rlt.success)
             {
                 return rlt.data;
@@ -77,33 +77,33 @@ namespace XCenter
         /// <summary>
         /// 根据微信OpenId获取
         /// </summary>
-        /// <param name="icommon"></param>
+        /// <param name="com"></param>
         /// <param name="wxopenid"></param>
         /// <returns></returns>
-        public static Account GetByOpenId(xCommon icommon, String wxopenid)
+        public static Account GetByOpenId(xCommon com, String wxopenid)
         {
-            return Get(icommon, wxopenid, "wxopenid");
+            return Get(com, wxopenid, "wxopenid");
         }
         /// <summary>
         /// 获取一个账号信息
         /// </summary>
-        /// <param name="icommon"></param>
+        /// <param name="com"></param>
         /// <param name="sid"></param>
         /// <returns></returns>
-        public static String GetName(xCommon icommon, String sid)
+        public static String GetName(xCommon com, String sid)
         {
-            if (string.IsNullOrEmpty(sid) || icommon == null)
+            if (string.IsNullOrEmpty(sid) || com == null)
             {
                 return "";
             }
-            var val = Wlniao.Cache.Get("sidname-" + icommon.Host + "-" + sid);
+            var val = Wlniao.Cache.Get("sidname-" + com.Host + "-" + sid);
             if (string.IsNullOrEmpty(val))
             {
-                var rlt = icommon.Get<Account>("app", "getaccount", new KeyValuePair<string, string>("sid", sid));
+                var rlt = com.Get<Account>("app", "getaccount", new KeyValuePair<string, string>("sid", sid));
                 if (rlt.success && !string.IsNullOrEmpty(rlt.data.name))
                 {
                     val = rlt.data.name;
-                    Wlniao.Cache.Set("sidname-" + icommon.Host + "-" + sid, val, 3600);
+                    Wlniao.Cache.Set("sidname-" + com.Host + "-" + sid, val, 3600);
                 }
                 else
                 {
